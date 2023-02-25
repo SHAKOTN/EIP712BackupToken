@@ -1,5 +1,12 @@
 name: lint
-on: [pull_request]
+on:
+    push:
+        branches:
+        - main
+    pull_request:
+        paths:
+        - "contracts/**"
+
 jobs:
   lint:
     runs-on: ubuntu-latest
