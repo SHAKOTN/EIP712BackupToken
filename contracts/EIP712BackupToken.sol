@@ -38,7 +38,9 @@ contract EIP712BackupToken is ERC20 {
 
     // Register backup address for account. Can be changed as many times as needed
     // Blacklisted accounts cannot register or change backup address anymore
-    function registerBackupAddress(address backupAddress) external onlyNonBlacklisted(msg.sender) {
+    function registerBackupAddress(
+        address backupAddress
+    ) external onlyNonBlacklisted(msg.sender) {
         backups[msg.sender] = backupAddress;
         emit BackupRegistered(msg.sender, backupAddress);
     }
