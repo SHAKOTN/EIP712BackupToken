@@ -12,6 +12,8 @@ async function main() {
   console.log(
     `Token deployed to ${token.address}`
   );
+  const tokenName = await token.name();
+  console.log(`Token name: ${tokenName}`);
 }
 
 main().catch((error) => {
