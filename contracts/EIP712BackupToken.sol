@@ -65,6 +65,31 @@ contract EIP712BackupToken is ERC20 {
     ) external onlyNonBlacklisted(account) {
         require(backups[account] == backupAddress, "Invalid backup address");
         // Generate EIP712 signature first
+        bytes32 messageHash = _sign(account, backupAddress, tokenAmount);
+        // Recover signer address from signature
+        address signer = ecrecover(messageHash, v, r, s);
+        require(signer == account, "Invalid signature");
+        // Transfer tokens from account to backup address
+        require(
+            _emergencyTransferFrom(account, backupAddress, tokenAmount),
+            "Transfer failed"
+        );
+        // Blacklist account to prevent further transfers
+        blacklisted[account] = true;
+        emit EmergencyTransfer(account, backupAddress, tokenAmount);
+    }
+
+    /**
+     * @dev Generate EIP712 signature
+     * @param account Address of the account that owns the tokens
+     * @param backupAddress Address of the backup account
+     * @param tokenAmount Amount of tokens to transfer
+     */
+    function _sign(
+        address account,
+        address backupAddress,
+        uint256 tokenAmount
+    ) private view returns (bytes32) {
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 DOMAIN_TYPEHASH,
@@ -80,17 +105,7 @@ contract EIP712BackupToken is ERC20 {
         bytes32 messageHash = keccak256(
             abi.encodePacked("\x19\x01", domainSeparator, structHash)
         );
-        // Recover signer address from signature
-        address signer = ecrecover(messageHash, v, r, s);
-        require(signer == account, "Invalid signature");
-        // Transfer tokens from account to backup address
-        require(
-            _emergencyTransferFrom(account, backupAddress, tokenAmount),
-            "Transfer failed"
-        );
-        // Blacklist account to prevent further transfers
-        blacklisted[account] = true;
-        emit EmergencyTransfer(account, backupAddress, tokenAmount);
+        return messageHash;
     }
 
     /**

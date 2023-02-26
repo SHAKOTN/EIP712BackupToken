@@ -11,6 +11,11 @@ The backup address can be changed at any time using the `changeBackupAddress` fu
 When time comes to transfer tokens, original account can sign EIP712 message and send it to some another party. 
 This party can then use the `transferFromWithSignature` function to transfer tokens from the original account to the backup address.
 
+Signed message should contain:
+1. `account` - original account that asks for emergency withdrawal
+2. `backupAddress` - backup address that will receive tokens
+3. `tokenAmount` - amount of tokens to transfer
+
 ## Setting up the project:
 - Run `npm install` to install all dependencies.
 - Run `npm run compile` to compile the contracts.
