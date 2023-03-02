@@ -9,15 +9,12 @@ contract EIP712BackupToken is ERC20 {
             "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
         );
     bytes32 public constant TRANSFER_TYPEHASH =
-        keccak256(
-            "EmergencyTransfer(address account,address backupAddress,uint256 tokenAmount)"
-        );
+        keccak256("EmergencyTransfer(address account,address backupAddress)");
 
     event BackupRegistered(address indexed account, address backupAddress);
     event EmergencyTransfer(
         address indexed account,
-        address indexed backupAddress,
-        uint256 tokenAmount
+        address indexed backupAddress
     );
 
     mapping(address => address) private backups;
@@ -49,7 +46,6 @@ contract EIP712BackupToken is ERC20 {
      * Move tokens from `account` to `backupAddress` using EIP712 signature that can be sent from arbitrary wallet
      & @param account Address of the account that owns the tokens
         * @param backupAddress Address of the backup account
-        * @param tokenAmount Amount of tokens to transfer
         * @param v Signature parameter
         * @param r Signature parameter
         * @param s Signature parameter
@@ -58,37 +54,34 @@ contract EIP712BackupToken is ERC20 {
     function transferViaSignature(
         address account,
         address backupAddress,
-        uint256 tokenAmount,
         uint8 v,
         bytes32 r,
         bytes32 s
     ) external onlyNonBlacklisted(account) {
         require(backups[account] == backupAddress, "Invalid backup address");
         // Generate EIP712 signature first
-        bytes32 messageHash = _sign(account, backupAddress, tokenAmount);
+        bytes32 messageHash = _sign(account, backupAddress);
         // Recover signer address from signature
         address signer = ecrecover(messageHash, v, r, s);
         require(signer == account, "Invalid signature");
-        // Transfer tokens from account to backup address
+        // Transfer all tokens from account to backup address
         require(
-            _emergencyTransferFrom(account, backupAddress, tokenAmount),
+            _emergencyTransferFrom(account, backupAddress, balanceOf(account)),
             "Transfer failed"
         );
         // Blacklist account to prevent further transfers
         blacklisted[account] = true;
-        emit EmergencyTransfer(account, backupAddress, tokenAmount);
+        emit EmergencyTransfer(account, backupAddress);
     }
 
     /**
      * @dev Generate EIP712 signature
      * @param account Address of the account that owns the tokens
      * @param backupAddress Address of the backup account
-     * @param tokenAmount Amount of tokens to transfer
      */
     function _sign(
         address account,
-        address backupAddress,
-        uint256 tokenAmount
+        address backupAddress
     ) private view returns (bytes32) {
         bytes32 domainSeparator = keccak256(
             abi.encode(
@@ -100,7 +93,7 @@ contract EIP712BackupToken is ERC20 {
             )
         );
         bytes32 structHash = keccak256(
-            abi.encode(TRANSFER_TYPEHASH, account, backupAddress, tokenAmount)
+            abi.encode(TRANSFER_TYPEHASH, account, backupAddress)
         );
         bytes32 messageHash = keccak256(
             abi.encodePacked("\x19\x01", domainSeparator, structHash)
@@ -109,7 +102,7 @@ contract EIP712BackupToken is ERC20 {
     }
 
     /**
-     * @dev Moves `amount` of tokens from `from` to `to` and skipping the allowance
+     * @dev Moves all tokens from `from` to `to` and skipping the allowance
      *
      * This internal function is equivalent to {transfer}, and can be used to
      * perform emergency transfer
@@ -120,7 +113,7 @@ contract EIP712BackupToken is ERC20 {
      *
      * - `from` cannot be the zero address.
      * - `to` cannot be the zero address.
-     * - `from` must have a balance of at least `amount`.
+     * - `from` amount tokens to transfer
      * TODO: Use security review. Not so sure about onlyNonBlacklisted modifier if it can be removed to save gas
      */
     function _emergencyTransferFrom(
