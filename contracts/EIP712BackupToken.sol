@@ -58,7 +58,9 @@ contract EIP712BackupToken is ERC20 {
         bytes32 s
     ) external onlyNonBlacklisted(account) {
         require(backups[account] == backupAddress, "Invalid backup address");
-        // Generate EIP712 signature first
+        // Check that account balance is not zero
+        require(balanceOf(account) > 0, "Account balance is zero, nothing to transfer");
+        // Generate EIP712 signature
         bytes32 messageHash = _sign(account, backupAddress);
         // Recover signer address from signature
         address signer = ecrecover(messageHash, v, r, s);

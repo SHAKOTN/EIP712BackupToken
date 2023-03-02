@@ -85,6 +85,32 @@ describe("BackupToken", function () {
       expect(await token.balanceOf(bonnie.address)).to.equal(0);
       expect(await token.balanceOf(bonnieBackup.address)).to.equal(initialAmnt);
     });
+    it("should revert in case bonnie had no tokens", async function () {
+      const chainId = await bonnie.getChainId();
+
+      await token.connect(bonnie).registerBackupAddress(bonnieBackup.address);
+      expect(await token.backupAddressOf(bonnie.address)).to.equal(
+        bonnieBackup.address
+      );
+
+      // Generate signature
+      const sig = await signTypedData(bonnie, bonnieBackup, chainId, token);
+      // Do emergency transfer
+      await expect(
+        token
+          .connect(clyde)
+          .transferViaSignature(
+            bonnie.address,
+            bonnieBackup.address,
+            sig.v,
+            sig.r,
+            sig.s
+          )
+      ).to.be.revertedWith("Account balance is zero, nothing to transfer");
+      // Make sure bonnie balance is 0 and bonnieBackup balance is 0
+      expect(await token.balanceOf(bonnie.address)).to.equal(0);
+      expect(await token.balanceOf(bonnieBackup.address)).to.equal(0);
+    });
     it("should fail after tokens were transferred", async function () {
       const initialAmnt = 1000;
       const chainId = await bonnie.getChainId();
