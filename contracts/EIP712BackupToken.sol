@@ -49,7 +49,6 @@ contract EIP712BackupToken is ERC20 {
         * @param v Signature parameter
         * @param r Signature parameter
         * @param s Signature parameter
-     * TODO: Use security review
      */
     function transferViaSignature(
         address account,
@@ -114,7 +113,6 @@ contract EIP712BackupToken is ERC20 {
      * - `from` cannot be the zero address.
      * - `to` cannot be the zero address.
      * - `from` amount tokens to transfer
-     * TODO: Use security review. Not so sure about onlyNonBlacklisted modifier if it can be removed to save gas
      */
     function _emergencyTransferFrom(
         address from,
