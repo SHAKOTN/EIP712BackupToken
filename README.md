@@ -25,3 +25,24 @@ Signed message should contain:
 
 ## Running the linter:
 - Run `npm run prettier` to run the linter.
+
+
+## Deployment
+First, create a `.env` file in the root directory of the project and add the following variables:
+```
+GOERLI_PRIVATE_KEY=0x...
+GOERLI_NODE_URL=https://goerli.infura.io/v3/...
+```
+OR 
+
+```
+MAINNET_PRIVATE_KEY=0x...
+MAINNET_NODE_URL=https://mainnet.infura.io/v3/...
+```
+
+Then, run:
+
+- Run `npm run deploy-goerli` to deploy to Goerli testnet or
+- Run `npm run deploy-mainnet` to deploy to Mainnet.
+
+to deploy to Mainnet.
